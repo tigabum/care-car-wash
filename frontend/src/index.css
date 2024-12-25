@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap");
+
+body {
+  font-family: "Roboto", sans-serif;
+}
+
+/* Add smooth hover transitions */
+a {
+  transition: all 0.3s ease;
+}
+
+/* Add this to your existing styles */
+.water-drops {
+  animation: dropFall 20s linear infinite;
+}
+
+@keyframes dropFall {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 1000px;
+  }
+}

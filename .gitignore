@@ -1,0 +1,45 @@
+# Frontend (React) gitignore
+frontend/node_modules/
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/build/
+frontend/dist/
+frontend/.cache/
+frontend/coverage/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.DS_Store
+
+# Backend (Node/Express) gitignore
+backend/node_modules/
+backend/.env
+backend/dist/
+backend/build/
+backend/coverage/
+backend/logs/
+backend/*.log
+backend/npm-debug.log*
+backend/yarn-debug.log*
+backend/yarn-error.log*
+backend/.DS_Store
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+*.sublime-workspace
+*.sublime-project
+
+# Operating System Files
+Thumbs.db
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
