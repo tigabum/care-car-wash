@@ -1,12 +1,14 @@
-import { Router, Request, Response } from "express";
-import { getServices, getServiceById } from "../controllers/serviceController";
+import { Router, RequestHandler } from "express";
+import {
+  getServices,
+  createService,
+  getServiceById,
+} from "../controllers/serviceController";
 
 const router = Router();
 
-router.get("/", getServices as (req: Request, res: Response) => Promise<void>);
-router.get(
-  "/:id",
-  getServiceById as (req: Request, res: Response) => Promise<void>
-);
+router.get("/", getServices as RequestHandler);
+router.post("/", createService as RequestHandler);
+router.get("/:id", getServiceById as RequestHandler);
 
 export default router;

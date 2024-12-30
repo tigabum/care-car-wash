@@ -18,12 +18,29 @@ const ServicesSection = () => {
 
   useEffect(() => {
     const fetchServices = async () => {
+      setLoading(true);
+      setError(null);
+
       try {
         const data = await getServices();
+
+        if (!data) {
+          throw new Error("No data received from the server");
+        }
+
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid data format received");
+        }
+
         setServices(data);
-        setLoading(false);
       } catch (err) {
-        setError("Failed to load services");
+        console.error("Error fetching services:", err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load services. Please try again later."
+        );
+      } finally {
         setLoading(false);
       }
     };
