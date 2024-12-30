@@ -1,71 +1,54 @@
 import mongoose from "mongoose";
-import Service from "../models/Service";
 import dotenv from "dotenv";
+import Service from "../models/Service";
+import { connectDB } from "../config/database";
 
 dotenv.config();
 
-const services = [
+const seedServices = [
   {
     name: "Basic Wash",
-    price: 15.99,
-    features: [
-      "Exterior Wash",
-      "Spot-Free Rinse",
-      "Power Dry",
-      "Wheel Cleaning",
-    ],
+    price: 29.99,
+    features: ["Exterior Wash", "Hand Dry", "Wheel Cleaning"],
     popular: false,
   },
   {
     name: "Premium Wash",
-    price: 24.99,
+    price: 49.99,
     features: [
-      "Everything in Basic Wash",
-      "Triple Foam Polish",
-      "Underbody Wash",
-      "Tire Shine",
-      "Rain-X Protection",
+      "Exterior Wash",
+      "Hand Dry",
+      "Wheel Cleaning",
+      "Interior Vacuum",
+      "Dashboard Cleaning",
     ],
     popular: true,
   },
   {
-    name: "Ultimate Wash",
-    price: 32.99,
+    name: "Deluxe Detail",
+    price: 89.99,
     features: [
-      "Everything in Premium Wash",
-      "Ceramic Coating",
-      "Interior Vacuum",
-      "Dashboard Cleaning",
-      "Window Cleaning",
+      "Full Service Wash",
+      "Interior Detail",
+      "Wax Protection",
+      "Tire Shine",
       "Air Freshener",
     ],
     popular: false,
   },
 ];
 
-const seedDatabase = async () => {
+const seedDB = async () => {
   try {
-    // Connect to MongoDB
-    await mongoose.connect(
-      process.env.MONGODB_URI || "mongodb://localhost:27017/carwash"
-    );
-    console.log("Connected to MongoDB");
-
-    // Clear existing services
-    await Service.deleteMany({});
-    console.log("Cleared existing services");
-
-    // Insert new services
-    const createdServices = await Service.insertMany(services);
-    console.log("Services seeded successfully:", createdServices);
-
-    // Close the connection
-    await mongoose.connection.close();
-    console.log("Database connection closed");
+    await connectDB();
+    await Service.deleteMany({}); // Clear existing services
+    await Service.insertMany(seedServices);
+    console.log("Database seeded successfully");
+    process.exit(0);
   } catch (error) {
     console.error("Error seeding database:", error);
     process.exit(1);
   }
 };
 
-seedDatabase();
+seedDB();

@@ -2,18 +2,52 @@ import axios from "axios";
 import { OrderFormData } from "../types/order";
 import { Booking } from "../types/booking";
 
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL || "http://localhost:7050/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: false,
 });
 
+api.interceptors.request.use(
+  (config) => {
+    console.log("Request:", config.url);
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    console.error("API Error:", error.response || error);
+    return Promise.reject(error);
+  }
+);
+
 export const getServices = async () => {
-  const response = await api.get("/services");
-  return response.data;
+  try {
+    const response = await api.get("/services");
+    console.log("Services API Response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Services API Error:", error);
+    if (axios.isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.message ||
+          `Failed to fetch services: ${error.message}`
+      );
+    }
+    throw error;
+  }
 };
 
 export const getLocations = async () => {
