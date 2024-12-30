@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.tsx";
-import { Service } from "../types/services";
+import { Service } from "../types/services.ts";
+import { Company } from "../types/company.ts";
 import { BookingFormData } from "../types/booking.ts";
-import { getServiceById } from "../services/api.ts";
-import { createBooking } from "../services/api.ts";
-import { toast } from "react-toastify";
+import { getServiceById, createBooking } from "../services/api.ts";
+import { toast } from "react-hot-toast";
 import SuccessMessage from "../components/SuccessMessage.tsx";
+import CompanySelectModal from "../components/CompanySelectModal.tsx";
 
 const PackageDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +16,8 @@ const PackageDetailPage = () => {
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [showCompanyModal, setShowCompanyModal] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [formData, setFormData] = useState<BookingFormData>({
     fullName: "",
     phoneNumber: "",
@@ -31,6 +34,11 @@ const PackageDetailPage = () => {
         if (id) {
           const data = await getServiceById(id);
           setService(data);
+
+          // If it's a public servant service, show company modal
+          if (data.isPublicServant && !selectedCompany) {
+            setShowCompanyModal(true);
+          }
         }
       } catch (error) {
         toast.error("Failed to load package details");
@@ -40,7 +48,7 @@ const PackageDetailPage = () => {
     };
 
     fetchService();
-  }, [id]);
+  }, [id, selectedCompany]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -52,20 +60,37 @@ const PackageDetailPage = () => {
     }));
   };
 
+  const handleCompanySelect = (company: Company) => {
+    setSelectedCompany(company);
+    setShowCompanyModal(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser || !service) return;
 
+    const bookingData = {
+      fullName: formData.fullName,
+      phoneNumber: formData.phoneNumber,
+      carType: formData.carType,
+      licensePlate: formData.licensePlate,
+      location: formData.location,
+      appointmentDate: formData.appointmentDate,
+      userId: currentUser.uid,
+      serviceId: service._id,
+      companyId: selectedCompany?._id || undefined,
+      totalPrice: service.price,
+      isPublicServant: service.isPublicServant || false,
+    };
+
+    console.log("Submitting booking:", bookingData); // Debug log
+
     try {
       setSubmitting(true);
-      await createBooking({
-        ...formData,
-        userId: currentUser.uid,
-        packageId: service._id,
-        appointmentDate: new Date(formData.appointmentDate),
-      });
+      await createBooking(bookingData);
       setShowSuccess(true);
     } catch (error) {
+      console.error("Booking error:", error);
       toast.error("Failed to submit booking");
     } finally {
       setSubmitting(false);
@@ -88,24 +113,37 @@ const PackageDetailPage = () => {
     );
   }
 
-  if (showSuccess) {
-    return (
-      <SuccessMessage
-        message="Your booking has been successfully submitted!"
-        redirectPath="/bookings"
-        redirectTime={3000}
-      />
-    );
-  }
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         {/* Package Details */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-6">
-            {service.name}
+            {service?.name}
           </h1>
+          {service?.isPublicServant && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <h3 className="text-lg font-semibold text-blue-800 mb-2">
+                Public Servant Service
+              </h3>
+              {selectedCompany ? (
+                <div>
+                  <p className="text-blue-600">Selected Company:</p>
+                  <p className="font-medium">{selectedCompany.name}</p>
+                  <button
+                    onClick={() => setShowCompanyModal(true)}
+                    className="text-blue-600 text-sm mt-2 hover:text-blue-700"
+                  >
+                    Change Company
+                  </button>
+                </div>
+              ) : (
+                <p className="text-blue-600">
+                  Please select your company to proceed
+                </p>
+              )}
+            </div>
+          )}
           <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
             <p className="text-2xl font-bold text-blue-600 mb-4">
               ${service.price}
@@ -139,106 +177,141 @@ const PackageDetailPage = () => {
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
             Book Your Wash
           </h2>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name
-              </label>
-              <input
-                type="text"
-                name="fullName"
-                required
-                value={formData.fullName}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                name="phoneNumber"
-                required
-                value={formData.phoneNumber}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Car Type
-              </label>
-              <input
-                type="text"
-                name="carType"
-                required
-                value={formData.carType}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                License Plate
-              </label>
-              <input
-                type="text"
-                name="licensePlate"
-                required
-                value={formData.licensePlate}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Location
-              </label>
-              <select
-                name="location"
-                required
-                value={formData.location}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          {service?.isPublicServant && !selectedCompany ? (
+            <div className="text-center py-8">
+              <p className="text-gray-600 mb-4">
+                Please select your company to proceed with booking
+              </p>
+              <button
+                onClick={() => setShowCompanyModal(true)}
+                className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
               >
-                <option value="">Select a location</option>
-                <option value="S. Buffalo Dr.">S. Buffalo Dr.</option>
-                <option value="N. Durango">N. Durango</option>
-                <option value="S. Fort Apache Rd.">S. Fort Apache Rd.</option>
-                {/* Add more locations */}
-              </select>
+                Select Company
+              </button>
             </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  name="fullName"
+                  required
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Appointment Date
-              </label>
-              <input
-                type="datetime-local"
-                name="appointmentDate"
-                required
-                value={formData.appointmentDate}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  name="phoneNumber"
+                  required
+                  value={formData.phoneNumber}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {submitting ? "Submitting..." : "Book Now"}
-            </button>
-          </form>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Car Type
+                </label>
+                <input
+                  type="text"
+                  name="carType"
+                  required
+                  value={formData.carType}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  License Plate
+                </label>
+                <input
+                  type="text"
+                  name="licensePlate"
+                  required
+                  value={formData.licensePlate}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Location
+                </label>
+                <select
+                  name="location"
+                  required
+                  value={formData.location}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select a location</option>
+                  <option value="S. Buffalo Dr.">S. Buffalo Dr.</option>
+                  <option value="N. Durango">N. Durango</option>
+                  <option value="S. Fort Apache Rd.">S. Fort Apache Rd.</option>
+                  {/* Add more locations */}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Appointment Date
+                </label>
+                <input
+                  type="datetime-local"
+                  name="appointmentDate"
+                  required
+                  value={formData.appointmentDate}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? "Submitting..." : "Book Now"}
+              </button>
+            </form>
+          )}
         </div>
       </div>
+
+      {/* Company Selection Modal */}
+      <CompanySelectModal
+        isOpen={showCompanyModal}
+        onClose={() => {
+          setShowCompanyModal(false);
+          if (!selectedCompany && service?.isPublicServant) {
+            navigate("/services");
+          }
+        }}
+        onSelect={handleCompanySelect}
+      />
+
+      {/* Success Message */}
+      {showSuccess && (
+        <SuccessMessage
+          message="Your booking has been successfully submitted!"
+          redirectPath="/bookings"
+          redirectTime={3000}
+        />
+      )}
     </div>
   );
 };

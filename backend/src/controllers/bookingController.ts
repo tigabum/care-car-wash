@@ -3,26 +3,49 @@ import Booking from "../models/Booking";
 
 export const createBooking = async (req: Request, res: Response) => {
   try {
-    const booking = new Booking({
+    console.log("Received booking data:", req.body);
+
+    const bookingData = {
       ...req.body,
       status: "pending",
-    });
+    };
+
+    console.log("Processed booking data:", bookingData);
+
+    const booking = new Booking(bookingData);
     await booking.save();
     res.status(201).json(booking);
-  } catch (error) {
-    res.status(400).json({ message: "Error creating booking", error });
+  } catch (error: any) {
+    console.error("Booking creation error:", error);
+    res.status(400).json({
+      message: "Error creating booking",
+      error: error.message,
+      details: error.errors,
+    });
   }
 };
 
 export const getUserBookings = async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId;
+    console.log("Fetching bookings for userId:", userId); // Debug log
+
     const bookings = await Booking.find({ userId })
-      .populate("packageId")
+      .populate({
+        path: "serviceId",
+        select: "name price features", // Add any other fields you need
+      })
+      .populate("companyId")
       .sort({ createdAt: -1 });
+
+    console.log("Found bookings:", bookings); // Debug log
     res.json(bookings);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching bookings", error });
+    console.error("Error in getUserBookings:", error); // Debug log
+    res.status(500).json({
+      message: "Error fetching bookings",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
   }
 };
 

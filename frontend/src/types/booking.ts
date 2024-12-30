@@ -1,12 +1,13 @@
 export interface Booking {
-  id: string;
+  _id: string;
   userId: string;
-  packageId:
+  serviceId:
     | {
-        id: string;
+        _id: string;
         name: string;
         price: number;
         features: string[];
+        isPublicServant?: boolean;
       }
     | string;
   fullName: string;
@@ -14,9 +15,18 @@ export interface Booking {
   carType: string;
   licensePlate: string;
   location: string;
-  appointmentDate: Date;
+  appointmentDate: string | Date;
   status: "pending" | "confirmed" | "completed" | "cancelled";
   createdAt: Date;
+  companyId?:
+    | {
+        _id: string;
+        name: string;
+        registrationNumber: string;
+      }
+    | string;
+  isPublicServant: boolean;
+  totalPrice: number;
 }
 
 export interface BookingFormData {
@@ -27,5 +37,9 @@ export interface BookingFormData {
   location: string;
   appointmentDate: string;
   userId?: string;
-  packageId?: string;
+  serviceId?: string;
+  companyId?: string;
+  isPublicServant?: boolean;
+  totalPrice?: number;
+  status?: string;
 }

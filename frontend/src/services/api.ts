@@ -1,6 +1,7 @@
 import axios from "axios";
 import { OrderFormData } from "../types/order";
 import { Booking } from "../types/booking";
+import { Company } from "../types/company";
 
 const API_BASE_URL =
   process.env.REACT_APP_API_URL || "http://localhost:7050/api";
@@ -69,6 +70,10 @@ export const orderService = {
 
 // Booking related API calls
 export const createBooking = async (bookingData: Partial<Booking>) => {
+  console.log(
+    "Creating booking with data:",
+    JSON.stringify(bookingData, null, 2)
+  );
   const response = await api.post("/bookings", bookingData);
   return response.data;
 };
@@ -108,6 +113,34 @@ export const cancelBooking = async (id: string) => {
   const response = await api.delete(`/bookings/${id}`);
   console.log("API response:", response);
   return response.data;
+};
+
+export const searchCompanies = async (query: string) => {
+  const response = await api.get(
+    `/companies/search?query=${encodeURIComponent(query)}`
+  );
+  return response.data;
+};
+
+export const getCompanyById = async (id: string) => {
+  const response = await api.get(`/companies/${id}`);
+  return response.data;
+};
+
+export const createCompany = async (companyData: Partial<Company>) => {
+  const response = await api.post("/companies", companyData);
+  return response.data;
+};
+
+export const getCompanies = async () => {
+  try {
+    const response = await api.get("/companies");
+    console.log("Companies response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching companies:", error);
+    throw error;
+  }
 };
 
 export default api;
