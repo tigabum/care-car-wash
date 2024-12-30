@@ -20,6 +20,14 @@ const serviceSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    isPublicServant: {
+      type: Boolean,
+      default: false,
+    },
+    requiredCompanyVerification: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

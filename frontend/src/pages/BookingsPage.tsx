@@ -114,9 +114,9 @@ const BookingsPage = () => {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-lg font-medium text-gray-900">
-                      {typeof booking.packageId === "object"
-                        ? booking.packageId.name
-                        : "Package"}
+                      {typeof booking.serviceId === "object"
+                        ? booking.serviceId.name
+                        : "Service"}
                     </h3>
                     <p className="text-sm text-gray-500">
                       Booked for:{" "}

@@ -6,10 +6,17 @@ const bookingSchema = new Schema(
       type: String,
       required: true,
     },
-    packageId: {
+    serviceId: {
       type: Schema.Types.ObjectId,
       ref: "Service",
       required: true,
+    },
+    companyId: {
+      type: Schema.Types.ObjectId,
+      ref: "Company",
+      required: function (this: { isPublicServant: boolean }) {
+        return this.isPublicServant;
+      },
     },
     fullName: {
       type: String,
@@ -39,6 +46,14 @@ const bookingSchema = new Schema(
       type: String,
       enum: ["pending", "confirmed", "completed", "cancelled"],
       default: "pending",
+    },
+    isPublicServant: {
+      type: Boolean,
+      default: false,
+    },
+    totalPrice: {
+      type: Number,
+      required: true,
     },
   },
   {

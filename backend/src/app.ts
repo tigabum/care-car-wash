@@ -5,6 +5,7 @@ import { connectDB } from "./config/database";
 import orderRoutes from "./routes/orderRoutes";
 import serviceRoutes from "./routes/serviceRoutes";
 import { errorHandler } from "./middleware/errorHandler";
+import companyRoutes from "./routes/companyRoutes";
 
 dotenv.config();
 
@@ -31,9 +32,16 @@ app.use((req, res, next) => {
   next();
 });
 
+// Add this just before your routes
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
+
 // Routes
 app.use("/api/services", serviceRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/companies", companyRoutes);
 
 // Basic route for testing
 app.get("/api/health", (req, res) => {
