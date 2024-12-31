@@ -1,52 +1,19 @@
 import { Request, Response } from "express";
 import Booking from "../models/Booking";
+import Company from "../models/Company";
 import Service from "../models/Service";
 
+// Booking Management
 export const getAllBookings = async (req: Request, res: Response) => {
   try {
     const bookings = await Booking.find()
-      .populate("packageId")
-      .sort({ appointmentDate: -1 });
+      .populate("serviceId")
+      .populate("companyId")
+      .sort({ createdAt: -1 });
     res.json(bookings);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching bookings", error });
-  }
-};
-
-export const getBookingStats = async (req: Request, res: Response) => {
-  try {
-    const stats = await Booking.aggregate([
-      {
-        $group: {
-          _id: "$status",
-          count: { $sum: 1 },
-          revenue: {
-            $sum: {
-              $cond: [
-                { $eq: ["$status", "completed"] },
-                { $toDouble: "$packageId.price" },
-                0,
-              ],
-            },
-          },
-        },
-      },
-    ]);
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const todayBookings = await Booking.countDocuments({
-      createdAt: { $gte: today },
-    });
-
-    res.json({
-      statusBreakdown: stats,
-      todayBookings,
-      totalBookings: await Booking.countDocuments(),
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching booking stats", error });
+    console.error("Error fetching bookings:", error);
+    res.status(500).json({ message: "Failed to fetch bookings" });
   }
 };
 
@@ -57,12 +24,11 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
 
     const booking = await Booking.findByIdAndUpdate(
       id,
-      {
-        status,
-        updatedAt: new Date(),
-      },
+      { status },
       { new: true }
-    ).populate("packageId");
+    )
+      .populate("serviceId")
+      .populate("companyId");
 
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
@@ -70,43 +36,92 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
 
     res.json(booking);
   } catch (error) {
-    res.status(400).json({ message: "Error updating booking status", error });
+    console.error("Error updating booking:", error);
+    res.status(400).json({ message: "Error updating booking status" });
   }
 };
 
-export const getServiceStats = async (req: Request, res: Response) => {
+// Company Management
+export const getAllCompanies = async (req: Request, res: Response) => {
   try {
-    const services = await Service.find();
-    const stats = await Promise.all(
-      services.map(async (service) => {
-        const bookings = await Booking.countDocuments({
-          packageId: service._id,
-        });
-        const revenue = await Booking.aggregate([
-          {
-            $match: {
-              packageId: service._id,
-              status: "completed",
-            },
-          },
-          {
-            $group: {
-              _id: null,
-              total: { $sum: { $toDouble: "$packageId.price" } },
-            },
-          },
-        ]);
+    const companies = await Company.find().sort({ createdAt: -1 });
+    res.json(companies);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching companies", error });
+  }
+};
 
-        return {
-          service: service.name,
-          bookings,
-          revenue: revenue[0]?.total || 0,
-        };
-      })
+export const createCompany = async (req: Request, res: Response) => {
+  try {
+    const company = new Company(req.body);
+    await company.save();
+    res.status(201).json(company);
+  } catch (error) {
+    res.status(400).json({ message: "Error creating company", error });
+  }
+};
+
+export const toggleCompanyVerification = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+    const { isVerified } = req.body;
+
+    const company = await Company.findByIdAndUpdate(
+      id,
+      { isVerified },
+      { new: true }
     );
 
-    res.json(stats);
+    if (!company) {
+      return res.status(404).json({ message: "Company not found" });
+    }
+
+    res.json(company);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching service stats", error });
+    res.status(400).json({ message: "Error updating company", error });
+  }
+};
+
+// Service Management
+export const getAllServices = async (req: Request, res: Response) => {
+  try {
+    const services = await Service.find().sort({ createdAt: -1 });
+    res.json(services);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching services", error });
+  }
+};
+
+export const createService = async (req: Request, res: Response) => {
+  try {
+    const service = new Service(req.body);
+    await service.save();
+    res.status(201).json(service);
+  } catch (error) {
+    res.status(400).json({ message: "Error creating service", error });
+  }
+};
+
+export const toggleServicePopular = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { popular } = req.body;
+
+    const service = await Service.findByIdAndUpdate(
+      id,
+      { popular },
+      { new: true }
+    );
+
+    if (!service) {
+      return res.status(404).json({ message: "Service not found" });
+    }
+
+    res.json(service);
+  } catch (error) {
+    res.status(400).json({ message: "Error updating service", error });
   }
 };
