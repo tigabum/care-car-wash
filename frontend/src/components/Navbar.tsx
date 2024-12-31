@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.tsx";
+import { useAdmin } from "../contexts/AdminContext.tsx";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAdmin } = useAdmin();
 
   const displayName =
     currentUser?.displayName || currentUser?.email?.split("@")[0] || "";
@@ -341,6 +343,15 @@ const Navbar = () => {
             )}
           </div>
         </div>
+      )}
+
+      {isAdmin && (
+        <Link
+          to="/admin"
+          className="text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
+        >
+          Admin Dashboard
+        </Link>
       )}
     </nav>
   );

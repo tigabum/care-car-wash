@@ -4,8 +4,10 @@ import dotenv from "dotenv";
 import { connectDB } from "./config/database";
 import orderRoutes from "./routes/orderRoutes";
 import serviceRoutes from "./routes/serviceRoutes";
+import bookingRoutes from "./routes/bookingRoutes";
 import { errorHandler } from "./middleware/errorHandler";
 import companyRoutes from "./routes/companyRoutes";
+import adminRoutes from "./routes/adminRoutes";
 
 dotenv.config();
 
@@ -41,7 +43,9 @@ app.use((req, res, next) => {
 // Routes
 app.use("/api/services", serviceRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/bookings", bookingRoutes);
 app.use("/api/companies", companyRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Basic route for testing
 app.get("/api/health", (req, res) => {

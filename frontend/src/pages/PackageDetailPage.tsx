@@ -298,7 +298,7 @@ const PackageDetailPage = () => {
         onClose={() => {
           setShowCompanyModal(false);
           if (!selectedCompany && service?.isPublicServant) {
-            navigate("/services");
+            navigate("/");
           }
         }}
         onSelect={handleCompanySelect}
